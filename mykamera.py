@@ -13,25 +13,29 @@ class VideoThread(QThread):
 
     def __init__(self):
         super().__init__()
-        self.__run_flag = True
+        self._run_flag = True
 
     def run(self):
+        # capture from web cam
         cap = cv2.VideoCapture(0)
-        while self.__run_flag:
+        while self._run_flag:
             ret, cv_img = cap.read()
+
             if ret:
                 self.change_pixmap_signal.emit(cv_img)
+        # shut down capture system
         cap.release()
 
     def stop(self):
-        self.__run_flag = False
+        """Sets run flag to False and waits for thread to finish"""
+        self._run_flag = False
         self.wait()
 
 
 class Ui_MainWindow(object):
 
-    def setupUi(self):
-
+    def __init__(self):
+        super().__init__()
         self.disply_width = 640
         self.display_height = 480
         MainWindow.setObjectName("Camera")
@@ -65,7 +69,8 @@ class Ui_MainWindow(object):
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
         self.thread = VideoThread()
-        self.thread.change_pixmap_signal.connect(self.update_image)
+        # self.thread.change_pixmap_signal.connect(
+        #     self.update_image)
         self.thread.start()
 
     def closeEvent(self, event):
@@ -76,7 +81,7 @@ class Ui_MainWindow(object):
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
         qt_img = self.convert_cv_qt(cv_img)
-        self.image_label.setPixmap(qt_img)
+        self.camera.setPixmap(qt_img)
 
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
@@ -89,12 +94,17 @@ class Ui_MainWindow(object):
             self.disply_width, self.display_height, Qt.KeepAspectRatio)
         return QPixmap.fromImage(p)
 
+    def retranslateUi(self, MainWindow):
+        _translate = QtCore.QCoreApplication.translate
+        MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
+        self.camera.setText(_translate("MainWindow", "Kamera"))
+        self.pbcapture.setText(_translate("MainWindow", "Take Picture"))
+        self.label.setText(_translate("MainWindow", "Kamera buatankuu"))
+
 
 if __name__ == "__main__":
-    import sys
     app = QtWidgets.QApplication(sys.argv)
     MainWindow = QtWidgets.QMainWindow()
     ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
