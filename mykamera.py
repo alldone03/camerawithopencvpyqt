@@ -6,6 +6,15 @@ import numpy as np
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
 from PyQt5.QtGui import QPixmap
 import sys
+import os
+from io import BytesIO
+import win32clipboard
+from PIL import Image
+
+
+from datetime import datetime
+
+pathtosave = "C:/Users/Aldan Prayogi/Pictures/fotopy"
 
 
 class VideoThread(QThread):
@@ -16,14 +25,13 @@ class VideoThread(QThread):
         self._run_flag = True
 
     def run(self):
-        # capture from web cam
+
         cap = cv2.VideoCapture(0)
         while self._run_flag:
             ret, cv_img = cap.read()
-
+            cv_img = cv2.flip(cv_img, 2)
             if ret:
                 self.change_pixmap_signal.emit(cv_img)
-        # shut down capture system
         cap.release()
 
     def stop(self):
@@ -33,6 +41,7 @@ class VideoThread(QThread):
 
 
 class Ui_MainWindow(object):
+    dataimage = []
 
     def __init__(self):
         super().__init__()
@@ -67,21 +76,31 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        self.pbcapture.clicked.connect(self.savefile)
 
         self.thread = VideoThread()
-        # self.thread.change_pixmap_signal.connect(
-        #     self.update_image)
+        self.thread.change_pixmap_signal.connect(
+            self.update_image)
         self.thread.start()
 
     def closeEvent(self, event):
         self.thread.stop()
         event.accept()
 
-    @pyqtSlot(np.ndarray)
+    def savefile(self):
+        # print(str(os.path.exists('savedImage.jpg')))
+        try:
+            filename = datetime.now().strftime("%Y-%m-%d %H-%M-%S")+'.jpg'
+            print(filename + " Saved")
+            cv2.imwrite(os.path.join(pathtosave, filename), self.dataimage)
+        except:
+            print("error")
+
     def update_image(self, cv_img):
         """Updates the image_label with a new opencv image"""
         qt_img = self.convert_cv_qt(cv_img)
         self.camera.setPixmap(qt_img)
+        self.dataimage = cv_img
 
     def convert_cv_qt(self, cv_img):
         """Convert from an opencv image to QPixmap"""
@@ -97,7 +116,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "MainWindow"))
-        self.camera.setText(_translate("MainWindow", "Kamera"))
+
         self.pbcapture.setText(_translate("MainWindow", "Take Picture"))
         self.label.setText(_translate("MainWindow", "Kamera buatankuu"))
 
