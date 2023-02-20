@@ -3,13 +3,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import cv2
 import numpy as np
-from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt, QThread
+from PyQt5.QtCore import pyqtSignal, Qt, QThread
 from PyQt5.QtGui import QPixmap
 import sys
 import os
-from io import BytesIO
-import win32clipboard
-from PIL import Image
 
 
 from datetime import datetime
